@@ -42,37 +42,52 @@ public class StockController {
 	private MongoTemplate mongoTemplate;
 	
 	@RequestMapping(value = "/api/v1.0/market/stock/getall", method = RequestMethod.GET)
-	public List<Stock> getAllStocks() {
+	public ResponseEntity<serviceMessage> getAllStocks() {
+		HttpStatus httpResponse=HttpStatus.OK;
+		serviceMessage response=new serviceMessage();
 		List<Stock> stockList=new ArrayList<Stock>();
 		stockList.addAll(repository.findAll());
-		return stockList;
+        response = successMessage("stock List retrived successfully.","200", stockList);
+        return new ResponseEntity<>(response,httpResponse);
 	}
 	
 	@RequestMapping(value = "/api/v/1.0/market/stock/get/{companyCode}/{startDate}/{endDate}", method = RequestMethod.GET)
-	public List<Stock> getAllSelectedStocks(@PathVariable String companyCode,@PathVariable String startDate,@PathVariable String endDate) {
-		try{
-			System.out.println("dat check>>>>>>>"+startDate+"ednd date "+endDate);
-            Query query = new Query();
-            Criteria criteria = new Criteria();
-            criteria.andOperator(Criteria.where("stockDate").gte(startDate).lt(endDate),Criteria.where("companyCode").is(companyCode));
-            query.addCriteria(criteria);
-            System.out.println("dat querycheck>>>>>>>"+query);
-            return mongoTemplate.find(query, Stock.class);
+	public ResponseEntity<serviceMessage> getAllSelectedStocks(@PathVariable String companyCode,@PathVariable String startDate,@PathVariable String endDate) throws ParseException {
+		HttpStatus httpResponse=HttpStatus.OK;
+		serviceMessage response=new serviceMessage();
+		try{ 
+		    Date fromDate=new SimpleDateFormat("dd-MM-yyyy").parse(startDate);  
+		    Date toDate=new SimpleDateFormat("dd-MM-yyyy").parse(endDate);
+		    if(fromDate.compareTo(toDate) < 0 && toDate.compareTo(fromDate) > 0) {
+		    	Query query = new Query();
+	            Criteria criteria = new Criteria();
+	            criteria.andOperator(Criteria.where("stockDate").gte(fromDate).lt(toDate),Criteria.where("companyCode").is(companyCode));
+	            query.addCriteria(criteria);
+	            List<Stock> resultList = mongoTemplate.find(query, Stock.class);
+	            response = successMessage("stock List retrived successfully.","200", resultList);
+		    }else {
+		    	httpResponse=HttpStatus.BAD_REQUEST;
+				response = errorMessage("stock List date range in incorrect.please try again later","400", null);
+			}
         } catch(PatternSyntaxException e) {
-            return Collections.emptyList();
+        	httpResponse=HttpStatus.INTERNAL_SERVER_ERROR;
+			response = errorMessage("stock start and end date pattern is missmatching.please try again later","500", Collections.emptyList());
         }
+		return new ResponseEntity<>(response,httpResponse);
 	}
 	
-	public serviceMessage successMessage(String message,String code) {
+	public serviceMessage successMessage(String message,String code,List resultList) {
 		serviceMessage result=new serviceMessage();
 		result.setMessage(message);
 		result.setCode(code);
+		result.setResult(resultList);
 		return result;
 	}
-	public serviceMessage errorMessage(String message,String code) {
+	public serviceMessage errorMessage(String message,String code,List resultList) {
 		serviceMessage result=new serviceMessage();
 		result.setMessage(message);
 		result.setCode(code);
+		result.setResult(resultList);
 		return result;
 	}
 	
@@ -82,19 +97,16 @@ public class StockController {
 		serviceMessage response=new serviceMessage();
 		try {
 			stock.setCompanyCode(companyCode);
-//			String pattern = "dd/MM/yyyy";
-//			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-//
-//			String date = simpleDateFormat.format(stock.getStockDate());
-//			
-//			System.out.println("check>>>"+date);
 			if(repository.save(stock) !=null) {
-				response = successMessage("stock successfully added.","200");
+				response = successMessage("stock successfully added.","200", null);
+			}else {
+				httpResponse=HttpStatus.INTERNAL_SERVER_ERROR;
+				response = errorMessage("stock doesnot added.please try again later","500", null);
 			}
 			
 		}catch(Exception ex) {
 			httpResponse=HttpStatus.INTERNAL_SERVER_ERROR;
-			response = errorMessage("stock doesnot added.please try again later","500");
+			response = errorMessage("stock doesnot added.please try again later","500", null);
 		}
 		return new ResponseEntity<>(response,httpResponse);
 	}

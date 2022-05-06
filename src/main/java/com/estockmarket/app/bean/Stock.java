@@ -16,7 +16,7 @@ public class Stock {
 	private String stockName;
 	private String companyCode;
 	private double stockPrice;
-	@JsonFormat(pattern = "dd-mm-yyyy")
+	@JsonFormat(pattern = "dd-MM-yyyy")
 	private Date stockDate;
 	private String stockTime;
 	public String getStockId() {
