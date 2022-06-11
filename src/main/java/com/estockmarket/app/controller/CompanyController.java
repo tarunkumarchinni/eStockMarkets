@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,8 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.estockmarket.app.bean.Company;
 import com.estockmarket.app.repository.CompanyRepository;
+import com.estockmarket.app.service.KafkaSender;
 import com.mongodb.client.result.DeleteResult;
-
+@CrossOrigin(origins = "http://localhost:8081")
 @RestController
 public class CompanyController {
 	
@@ -25,9 +27,12 @@ public class CompanyController {
 	private CompanyRepository repository;
 	@Autowired
 	private MongoTemplate mongoTemplate;
+	@Autowired
+	KafkaSender kafkaSender;
 	
 	@RequestMapping(value = "/api/v1.0/market/company/getall", method = RequestMethod.GET)
 	public List<Company> getAllCompanies() {
+		kafkaSender.send("kafka to get the data was retrived in get call");
 		List<Company> companyList=new ArrayList<Company>();
 		companyList.addAll(repository.findAll());
 		return companyList;
