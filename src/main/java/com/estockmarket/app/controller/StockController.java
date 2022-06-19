@@ -34,7 +34,7 @@ import com.estockmarket.app.repository.StockRepository;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mongodb.client.result.DeleteResult;
 
-@CrossOrigin(origins = "http://localhost:8081")
+@CrossOrigin(origins = "*")
 @RestController
 public class StockController {
 	@Autowired

@@ -20,7 +20,7 @@ import com.estockmarket.app.repository.CompanyRepository;
 import com.estockmarket.app.service.KafkaSender;
 import com.estockmarket.app.service.Producer;
 import com.mongodb.client.result.DeleteResult;
-@CrossOrigin(origins = "http://localhost:8081")
+@CrossOrigin(origins = "*")
 @RestController
 public class CompanyController {
 	
