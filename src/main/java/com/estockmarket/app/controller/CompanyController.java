@@ -31,13 +31,13 @@ public class CompanyController {
 	@Autowired
 	KafkaSender kafkaSender;
 	
-//	private final Producer producer;
+	private final Producer producer;
 
-//    @Autowired
-//    CompanyController(Producer producer) {
-//        this.producer = producer;
-//    }
-//	
+    @Autowired
+    CompanyController(Producer producer) {
+        this.producer = producer;
+    }
+	
 	@RequestMapping(value = "/api/v1.0/market/company/getall", method = RequestMethod.GET)
 	public List<Company> getAllCompanies() {
 //		producer.sendMessage("kafka to get the data was retrived to get call successfully");
