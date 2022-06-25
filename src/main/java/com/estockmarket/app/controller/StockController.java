@@ -15,13 +15,15 @@ import java.util.List;
 import java.util.regex.PatternSyntaxException;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+//import org.springframework.data.mongodb.core.MongoTemplate;
+//import org.springframework.data.mongodb.core.query.Criteria;
+//import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -31,40 +33,74 @@ import com.estockmarket.app.bean.Company;
 import com.estockmarket.app.bean.Stock;
 import com.estockmarket.app.bean.serviceMessage;
 import com.estockmarket.app.repository.StockRepository;
+import com.estockmarket.app.service.StockService;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.mongodb.client.result.DeleteResult;
+//import com.mongodb.client.result.DeleteResult;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 @CrossOrigin(origins = "*")
 @RestController
 public class StockController {
-	@Autowired
-	private StockRepository repository;
-	@Autowired
-	private MongoTemplate mongoTemplate;
+	public static AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
 	
-	@RequestMapping(value = "/api/v1.0/market/stock/getall", method = RequestMethod.GET)
+	@Autowired
+	private StockRepository stockRepository;
+
+	@Autowired
+	private StockService stockService;
+
+	DynamoDBMapper mapper = new DynamoDBMapper(client);
+//	@Autowired
+//	private MongoTemplate mongoTemplate;
+	
+	@GetMapping(value = "/api/v1.0/market/stock/getall")
 	public ResponseEntity<serviceMessage> getAllStocks() {
 		HttpStatus httpResponse=HttpStatus.OK;
 		serviceMessage response=new serviceMessage();
-		List<Stock> stockList=new ArrayList<Stock>();
-		stockList.addAll(repository.findAll());
-        response = successMessage("stock List retrived successfully.","200", stockList);
+        response = successMessage("stock List retrived successfully.","200",stockService.getAllStocks());
         return new ResponseEntity<>(response,httpResponse);
 	}
 	
-	@RequestMapping(value = "/api/v/1.0/market/stock/get/{companyCode}/{startDate}/{endDate}", method = RequestMethod.GET)
+
+	@GetMapping(value = "/api/v/1.0/market/stock/get/{companyCode}/{startDate}/{endDate}")
 	public ResponseEntity<serviceMessage> getAllSelectedStocks(@PathVariable String companyCode,@PathVariable String startDate,@PathVariable String endDate) throws ParseException {
 		HttpStatus httpResponse=HttpStatus.OK;
 		serviceMessage response=new serviceMessage();
 		try{ 
-		    Date fromDate=new SimpleDateFormat("dd-MM-yyyy").parse(startDate);  
-		    Date toDate=new SimpleDateFormat("dd-MM-yyyy").parse(endDate);
+		    Date fromDate=new SimpleDateFormat("yyyy-MM-dd").parse(startDate);  
+		    Date toDate=new SimpleDateFormat("yyyy-MM-dd").parse(endDate);
+		    SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
+	        dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+	        String fromDate1 = dateFormatter.format(fromDate);
+	        String toDate1 = dateFormatter.format(toDate);
 		    if(fromDate.compareTo(toDate) < 0 && toDate.compareTo(fromDate) > 0) {
-		    	Query query = new Query();
-	            Criteria criteria = new Criteria();
-	            criteria.andOperator(Criteria.where("stockDate").gte(fromDate).lt(toDate),Criteria.where("companyCode").is(companyCode));
-	            query.addCriteria(criteria);
-	            List<Stock> resultList = mongoTemplate.find(query, Stock.class);
+		        
+		    	Map<String, AttributeValue> eav = new HashMap<String, AttributeValue>();
+		        eav.put(":val1", new AttributeValue().withS(companyCode));
+		        eav.put(":val2", new AttributeValue().withS(fromDate1));
+		        eav.put(":val3", new AttributeValue().withS(toDate1));
+		        DynamoDBQueryExpression<Stock> queryExpression = new DynamoDBQueryExpression<Stock>()
+		        		.withConsistentRead(false)
+		        		.withIndexName("companyCode-stockDate-index")
+			            .withKeyConditionExpression("companyCode =:val1 and stockDate between :val2 and :val3")
+			            .withExpressionAttributeValues(eav);
+
+		        List<Stock> resultList =  mapper.query(Stock.class, queryExpression);
 	            response = successMessage("stock List retrived successfully.","200", resultList);
 		    }else {
 		    	httpResponse=HttpStatus.BAD_REQUEST;
@@ -92,13 +128,13 @@ public class StockController {
 		return result;
 	}
 	
-	@RequestMapping(value = "/api/v1.0/market/stock/add/{companyCode}", method = RequestMethod.POST)
+	@PostMapping(value = "/api/v1.0/market/stock/add/{companyCode}")
 	public ResponseEntity<serviceMessage> addNewStock(@RequestBody Stock stock,@PathVariable String companyCode) {
 		HttpStatus httpResponse=HttpStatus.OK;
 		serviceMessage response=new serviceMessage();
 		try {
 			stock.setCompanyCode(companyCode);
-			if(repository.save(stock) !=null) {
+			if(stockRepository.save(stock) !=null) {
 				response = successMessage("stock successfully added.","200", null);
 			}else {
 				httpResponse=HttpStatus.INTERNAL_SERVER_ERROR;
@@ -112,14 +148,14 @@ public class StockController {
 		return new ResponseEntity<>(response,httpResponse);
 	}
 	
-	@RequestMapping(value = "/api/v1.0/market/stock/delete/{companyCode}", method = RequestMethod.DELETE)
-	public DeleteResult deleteStock(@PathVariable String companyCode) {
-		Query query = new Query();
-		Criteria criteria = new Criteria();
-        criteria.andOperator(Criteria.where("companyCode").is(companyCode));
-        query.addCriteria(criteria);
-		return mongoTemplate.remove(query, Stock.class, "stock");
-	}
+//	@RequestMapping(value = "/api/v1.0/market/stock/delete/{companyCode}", method = RequestMethod.DELETE)
+//	public DeleteResult deleteStock(@PathVariable String companyCode) {
+//		Query query = new Query();
+//		Criteria criteria = new Criteria();
+//        criteria.andOperator(Criteria.where("companyCode").is(companyCode));
+//        query.addCriteria(criteria);
+//		return mongoTemplate.remove(query, Stock.class, "stock");
+//	}
 	
 	
 }
