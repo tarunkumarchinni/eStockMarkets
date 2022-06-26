@@ -24,12 +24,25 @@ public class DynamoDBConfig {
     public AmazonDynamoDB amazonDynamoDB(AWSCredentialsProvider awsCredentialsProvider) {
         AmazonDynamoDB amazonDynamoDB
             = AmazonDynamoDBClientBuilder.standard()
-            //.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(amazonDynamoDBEndpoint, "us-west-2"))
+//            .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(amazonDynamoDBEndpoint, "us-east-1"))
             .withCredentials(awsCredentialsProvider).withRegion(Regions.US_EAST_1).build();
         return amazonDynamoDB;
     }
     @Bean
     public AWSCredentialsProvider awsCredentialsProvider() {
         return new AWSStaticCredentialsProvider(new BasicAWSCredentials(amazonAWSAccessKey, amazonAWSSecretKey));
+    }
+    
+    public AwsClientBuilder.EndpointConfiguration endpointConfiguration() {
+        return new AwsClientBuilder.EndpointConfiguration(amazonDynamoDBEndpoint, "us-east-1");
+    }
+ 
+    @Bean
+    public AmazonDynamoDB amazonDynamoDB() {
+        return AmazonDynamoDBClientBuilder
+                .standard()
+                .withEndpointConfiguration(endpointConfiguration())
+                .withCredentials(awsCredentialsProvider())
+                .build();
     }
 }

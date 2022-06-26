@@ -20,11 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.estockmarket.app.bean.Company;
 import com.estockmarket.app.repository.CompanyRepository;
 import com.estockmarket.app.service.CompanyServive;
-import com.estockmarket.app.service.KafkaSender;
-import com.estockmarket.app.service.Producer;
+//import com.estockmarket.app.service.KafkaSender;
+//import com.estockmarket.app.service.Producer;
 //import com.mongodb.client.result.DeleteResult;
 @CrossOrigin(origins = "*")
-@RestController()
+@RestController
 public class CompanyController {
 	
 	@Autowired
@@ -34,15 +34,20 @@ public class CompanyController {
 	
 	@Autowired
 	private CompanyServive companyService;
-	@Autowired
-	KafkaSender kafkaSender;
+//	@Autowired
+//	KafkaSender kafkaSender;
 	
-	private final Producer producer;
-
-    @Autowired
-    CompanyController(Producer producer) {
-        this.producer = producer;
-    }
+//	private final Producer producer;
+//
+//    @Autowired
+//    CompanyController(Producer producer) {
+//        this.producer = producer;
+//    }
+    
+    @GetMapping(value = "/")
+	public String getMessage() {
+		return "welcome to the page";
+	}
 	
     @GetMapping(value = "/api/v1.0/market/company/getall")
 	public List<Company> getAllCompanies() {

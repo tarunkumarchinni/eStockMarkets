@@ -56,15 +56,17 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 @CrossOrigin(origins = "*")
 @RestController
 public class StockController {
-	public static AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
+	
+//	@Autowired
+//	public DynamoDBConfig client;
+//
+//	DynamoDBMapper mapper = new DynamoDBMapper(client.amazonDynamoDB());
 	
 	@Autowired
 	private StockRepository stockRepository;
 
 	@Autowired
 	private StockService stockService;
-
-	DynamoDBMapper mapper = new DynamoDBMapper(client);
 //	@Autowired
 //	private MongoTemplate mongoTemplate;
 	
@@ -82,6 +84,7 @@ public class StockController {
 		HttpStatus httpResponse=HttpStatus.OK;
 		serviceMessage response=new serviceMessage();
 		try{ 
+			AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();//new
 		    Date fromDate=new SimpleDateFormat("yyyy-MM-dd").parse(startDate);  
 		    Date toDate=new SimpleDateFormat("yyyy-MM-dd").parse(endDate);
 		    SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
@@ -94,6 +97,7 @@ public class StockController {
 		        eav.put(":val1", new AttributeValue().withS(companyCode));
 		        eav.put(":val2", new AttributeValue().withS(fromDate1));
 		        eav.put(":val3", new AttributeValue().withS(toDate1));
+		    	DynamoDBMapper mapper = new DynamoDBMapper(client); // new
 		        DynamoDBQueryExpression<Stock> queryExpression = new DynamoDBQueryExpression<Stock>()
 		        		.withConsistentRead(false)
 		        		.withIndexName("companyCode-stockDate-index")

@@ -21,7 +21,12 @@
 		<dependency>
 		    <groupId>org.springframework.boot</groupId>
 		    <artifactId>spring-boot-starter-web</artifactId>
-		    </dependency>
+		 </dependency>
+		 <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+	      </dependency>
 		<!-- https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-netflix-zuul -->
 		<dependency>
 		    <groupId>org.springframework.cloud</groupId>
@@ -29,19 +34,14 @@
 		    <version>2.2.10.RELEASE</version>
 		</dependency>
 		<dependency>
-			<groupId>com.amazonaws</groupId>
-			<artifactId>aws-java-sdk-dynamodb</artifactId>
-			<version>1.11.892</version>
+		    <groupId>com.amazonaws</groupId>
+		    <artifactId>aws-java-sdk</artifactId>
+		    <version>1.12.248</version>
 		</dependency>
-		<!--  <dependency>
-			<groupId>com.github.derjust</groupId>
-			<artifactId>spring-data-dynamodb</artifactId>
-			<version>5.1.0</version>
-		</dependency>-->
 		<dependency>
-		  <groupId>io.github.boostchicken</groupId>
+		  <groupId>com.github.derjust</groupId>
 		  <artifactId>spring-data-dynamodb</artifactId>
-		  <version>5.2.5</version>
+		  <version>5.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -65,7 +65,11 @@
 			<artifactId>springdoc-openapi-ui</artifactId>
 			<version>1.2.32</version>
 		</dependency>
-		
+		<dependency>
+		   <groupId>commons-configuration</groupId>
+		   <artifactId>commons-configuration</artifactId>
+		   <version>1.9</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -73,6 +77,14 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
 			</plugin>
 			<plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
