@@ -25,7 +25,7 @@ public class Stock {
 	private String companyCode;
 	@DynamoDBAttribute
 	private double stockPrice;
-	@JsonFormat(pattern = "dd-MM-yyyy")
+	@JsonFormat(pattern = "yyyy-MM-dd")
 	private Date stockDate;
 	@DynamoDBAttribute
 	private String stockTime;
